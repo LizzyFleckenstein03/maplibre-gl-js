@@ -193,7 +193,7 @@ export class Painter {
         this.quadTriangleIndexBuffer = context.createIndexBuffer(quadTriangleIndices);
 
         const gl = this.context.gl;
-        this.stencilClearMode = new StencilMode({func: gl.ALWAYS, mask: 0}, 0x0, 0xFF, gl.ZERO, gl.ZERO, gl.ZERO);
+        this.stencilClearMode = new StencilMode({func: gl.ALWAYS, mask: 0}, 0x0, 0x7F, gl.ZERO, gl.ZERO, gl.ZERO);
     }
 
     /*
@@ -231,7 +231,7 @@ export class Painter {
         const context = this.context;
         const gl = context.gl;
 
-        if (this.nextStencilID + tileIDs.length > 256) {
+        if (this.nextStencilID + tileIDs.length > 128) {
             // we'll run out of fresh IDs so we need to clear and start from scratch
             this.clearStencil();
         }
@@ -249,7 +249,7 @@ export class Painter {
 
             program.draw(context, gl.TRIANGLES, DepthMode.disabled,
                 // Tests will always pass, and ref value will be written to stencil buffer.
-                new StencilMode({func: gl.ALWAYS, mask: 0}, id, 0xFF, gl.KEEP, gl.KEEP, gl.REPLACE),
+                new StencilMode({func: gl.ALWAYS, mask: 0}, id, 0x7F, gl.KEEP, gl.KEEP, gl.REPLACE),
                 ColorMode.disabled, CullFaceMode.disabled, clippingMaskUniformValues(tileID.posMatrix),
                 terrainData, '$clipping', this.tileExtentBuffer,
                 this.quadTriangleIndexBuffer, this.tileExtentSegments);
@@ -259,18 +259,18 @@ export class Painter {
     stencilModeFor3D(): StencilMode {
         this.currentStencilSource = undefined;
 
-        if (this.nextStencilID + 1 > 256) {
+        if (this.nextStencilID + 1 > 128) {
             this.clearStencil();
         }
 
         const id = this.nextStencilID++;
         const gl = this.context.gl;
-        return new StencilMode({func: gl.NOTEQUAL, mask: 0xFF}, id, 0xFF, gl.KEEP, gl.KEEP, gl.REPLACE);
+        return new StencilMode({func: gl.NOTEQUAL, mask: 0x7F}, id, 0x7F, gl.KEEP, gl.KEEP, gl.REPLACE);
     }
 
     stencilModeForClipping(tileID: OverscaledTileID): StencilMode {
         const gl = this.context.gl;
-        return new StencilMode({func: gl.EQUAL, mask: 0xFF}, this._tileClippingMaskIDs[tileID.key], 0x00, gl.KEEP, gl.KEEP, gl.REPLACE);
+        return new StencilMode({func: gl.EQUAL, mask: 0x7F}, this._tileClippingMaskIDs[tileID.key], 0x00, gl.KEEP, gl.KEEP, gl.REPLACE);
     }
 
     /*
@@ -292,12 +292,12 @@ export class Painter {
         const stencilValues = coords[0].overscaledZ - minTileZ + 1;
         if (stencilValues > 1) {
             this.currentStencilSource = undefined;
-            if (this.nextStencilID + stencilValues > 256) {
+            if (this.nextStencilID + stencilValues > 128) {
                 this.clearStencil();
             }
             const zToStencilMode = {};
             for (let i = 0; i < stencilValues; i++) {
-                zToStencilMode[i + minTileZ] = new StencilMode({func: gl.GEQUAL, mask: 0xFF}, i + this.nextStencilID, 0xFF, gl.KEEP, gl.KEEP, gl.REPLACE);
+                zToStencilMode[i + minTileZ] = new StencilMode({func: gl.GEQUAL, mask: 0x7F}, i + this.nextStencilID, 0x7F, gl.KEEP, gl.KEEP, gl.REPLACE);
             }
             this.nextStencilID += stencilValues;
             return [zToStencilMode, coords];

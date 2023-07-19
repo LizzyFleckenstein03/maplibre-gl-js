@@ -62,8 +62,10 @@ export function drawSymbols(painter: Painter, sourceCache: SourceCache, layer: S
 }) {
     if (painter.renderPass !== 'translucent') return;
 
-    // Disable the stencil test so that labels aren't clipped to tile boundaries.
-    const stencilMode = StencilMode.disabled;
+    // Use the highest bit of the stencil buffer for disabling symbols
+    const gl = painter.context.gl;
+    const stencilMode = new StencilMode({ func: gl.NOTEQUAL, mask: 0x80 }, 0x80, 0x00, gl.KEEP, gl.KEEP, gl.KEEP);
+
     const colorMode = painter.colorModeForRenderPass();
     const variablePlacement = layer.layout.get('text-variable-anchor');
 
